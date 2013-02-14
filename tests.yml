@@ -1,0 +1,16 @@
+%YAML:1.0
+tests:
+   - { path:"images/001.jpg", red: 38, blue:7 }
+   - { path:"images/002.jpg", red: 45, blue:4 }
+   - { path:"images/003.jpg", red: 81, blue:7 }
+   - { path:"images/004.jpg", red: 51, blue:5 }
+   - { path:"images/005.jpg", red: 47, blue:2 }
+   - { path:"images/006.jpg", red: 45, blue:6 }
+   - { path:"images/007.jpg", red: 44, blue:6 }
+   - { path:"images/008.jpg", red: 5, blue:5 }
+   - { path:"images/009.jpg", red: 11, blue:1 }
+   - { path:"images/010.jpg", red: 14, blue:14 }
+   #- { path:"images/011.jpg", red: -1, blue:0 }
+   #- { path:"images/130128_TCe-5_A.jpg", red: -1, blue:0 }
+   #- { path:"images/130128_ECe-7_B.jpg", red: 0, blue:8 }
+   
