@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "ColonyCounter.h"
 #include "CircleFinder.h"
 
@@ -25,13 +25,13 @@ void ColonyCounter::saveTraining(const char *path)
 	svm.save(path);
 }
 
-int labelColorToIndex(Scalar c) 
+int labelColorToIndex(Vec3b c) 
 {
-	if (c==Scalar(0,255,0)) // Background
+	if (c==Vec3b(0,255,0)) // Background
 		return 0;
-	if (c==Scalar(0,0,255)) // Red
+	if (c==Vec3b(0,0,255)) // Red
 		return 1;
-	if (c==Scalar(255,255,0)) // Cyan = Blue
+	if (c==Vec3b(255,255,0)) // Cyan = Blue
 		return 2;
 	return -1;
 }
@@ -80,7 +80,7 @@ void ColonyCounter::trainClassifier(vector<string> trainPaths, vector<string> la
 		{
 			for (int y=0;y<labelImg.rows;y++)
 			{
-				Scalar c = labelImg.at<Vec3b>(y, x);
+				Vec3b c = labelImg.at<Vec3b>(y, x);
 				int label = labelColorToIndex(c);
 				if (label >= 0)
 				{
@@ -111,7 +111,7 @@ void ColonyCounter::trainClassifier(vector<string> trainPaths, vector<string> la
 		{
 			for (int y=0;y<trainImg.rows;y++)
 			{
-				Scalar c = labelImg.at<Vec3b>(y, x);
+				Vec3b c = labelImg.at<Vec3b>(y, x);
 				int label = labelColorToIndex(c);
 				if (label >= 0)
 				{
@@ -199,7 +199,7 @@ static Mat findBackground(Mat& img, Mat& mask, int blurSize, Scalar& backgroundC
 
 	// Get average background color
 	Scalar backTotal = sum(background & bgmask3C);
-	Scalar backCnt = sum(bgmask)/255;
+	Scalar backCnt = sum(bgmask)/Scalar(255);
 	backgroundColor = backTotal/(backCnt[0]);
 
 	return background;
