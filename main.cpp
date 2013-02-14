@@ -158,8 +158,7 @@ int main(int argc, char* argv[])
 	if (argc == 1) {
 		char *appname = "ECPlates";
 		printf("Usage:\n");
-		printf(" %s count <image name> [<output file>]\nCounts colonies in an image, saving output to an optional file\n\n", appname);
-		printf(" %s countdebug <image name>\nCounts colonies in an image with debug images displayed\n\n", appname);
+		printf(" %s count <image name> [<colony image file>] [<petri image file>]\nCounts colonies in an image, saving output to optional files\n\n", appname);
 		printf(" %s train\nRun training (advanced)\n\n", appname);
 		printf(" %s test\nRun tests (advanced)\n\n", appname);
 		return 0;
@@ -187,9 +186,7 @@ int main(int argc, char* argv[])
 		runTests();
 	}
 
-	if (strcmp(argv[1], "count") == 0 || strcmp(argv[1], "countdebug") == 0) {
-		bool debug = strcmp(argv[1], "countdebug") == 0;
-
+	if (strcmp(argv[1], "count") == 0) {
 		// Load image
 		Mat img = imread(argv[2]);
 
@@ -203,9 +200,8 @@ int main(int argc, char* argv[])
 		// Preprocess image
 		petri = colonyCounter.preprocessImage(petri);
 
-		if (debug) {
-			imwrite("debug_petri.jpg", petri);
-			printf("See file debug_petri.jpg\n");
+		if (argc >= 5) {
+			imwrite(argv[4], petri);
 		}
 
 		// Classify image
@@ -216,12 +212,11 @@ int main(int argc, char* argv[])
 		Mat debugImage;
 		colonyCounter.countColonies(classified, red, blue, true, &debugImage);
 
-		if (debug) {
-			imwrite("debug_colonies.jpg", debugImage);
-			printf("See file debug_colonies.jpg\n");
+		if (argc >= 4) {
+			imwrite(argv[3], debugImage);
 		}
 
-		printf("red: %d\nblue: %d\n", red, blue);
+		printf("{\"red\": %d, \"blue\": %d, \"algorithm\": \"2013-02-14\"}\n", red, blue);
 	}
 
 	return 0;
