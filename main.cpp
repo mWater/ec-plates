@@ -199,6 +199,7 @@ int main(int argc, char* argv[])
 		DesktopOpenCVActivityContext context(argc-2, argv+2);
 		analyseECPlate(context);
 		printf("%s\n", context.returnValue.c_str());
+		waitKey(0);
 	}
 
 	return 0;
