@@ -9,6 +9,7 @@ public:
 	~ColonyCounter(void);
 
 	void loadTraining(const char *path);
+	void loadTrainingString(const char *data);
 	void saveTraining(const char *path);
 
 	// Trains the classifier given a set of sample images and label images which indicate

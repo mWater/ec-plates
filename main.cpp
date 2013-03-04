@@ -4,6 +4,8 @@
 #include "Circle.h"
 #include "CircleFinder.h"
 #include "ColonyCounter.h"
+#include "OpenCVActivityContext.h"
+#include "algorithm.h"
 
 using namespace cv;
 
@@ -159,6 +161,7 @@ int main(int argc, char* argv[])
 		char *appname = "ECPlates";
 		printf("Usage:\n");
 		printf(" %s count <image name> [<colony image file>] [<petri image file>]\nCounts colonies in an image, saving output to optional files\n\n", appname);
+		printf(" %s count-gui <image name> [<colony image file>] [<petri image file>]\nCounts colonies in an image with a gui, saving output to optional files\n\n", appname);
 		printf(" %s train\nRun training (advanced)\n\n", appname);
 		printf(" %s test\nRun tests (advanced)\n\n", appname);
 		return 0;
@@ -187,36 +190,15 @@ int main(int argc, char* argv[])
 	}
 
 	if (strcmp(argv[1], "count") == 0) {
-		// Load image
-		Mat img = imread(argv[2]);
+		ConsoleOpenCVActivityContext context(argc-2, argv+2);
+		analyseECPlate(context);
+		printf("%s\n", context.returnValue.c_str());
+	}
 
-		// Find petri img
-		Rect petriRect = findPetriRect(img);
-		Mat petri = img(petriRect);
-
-		ColonyCounter colonyCounter;
-		colonyCounter.loadTraining("svm_params.yml");
-
-		// Preprocess image
-		petri = colonyCounter.preprocessImage(petri);
-
-		if (argc >= 5) {
-			imwrite(argv[4], petri);
-		}
-
-		// Classify image
-		Mat classified = colonyCounter.classifyImage(petri);
-
-		// Count colonies
-		int red, blue;
-		Mat debugImage;
-		colonyCounter.countColonies(classified, red, blue, true, &debugImage);
-
-		if (argc >= 4) {
-			imwrite(argv[3], debugImage);
-		}
-
-		printf("{\"red\": %d, \"blue\": %d, \"algorithm\": \"2013-02-14\"}\n", red, blue);
+	if (strcmp(argv[1], "count-gui") == 0) {
+		DesktopOpenCVActivityContext context(argc-2, argv+2);
+		analyseECPlate(context);
+		printf("%s\n", context.returnValue.c_str());
 	}
 
 	return 0;

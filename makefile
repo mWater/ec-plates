@@ -5,9 +5,9 @@ CPP_FILES := $(wildcard *.cpp)
 OBJ_FILES := $(notdir $(CPP_FILES:.cpp=.o))
 
 
-main: $(OBJ_FILES)
-	g++ -o $@ $^ `pkg-config --libs opencv` 
+all: $(OBJ_FILES)
+	g++ -o ec-plates $^ `pkg-config --libs opencv` 
 
-%.o: %.cpp
+%.o: %.cpp 
 	g++ `pkg-config --cflags opencv` -c -o $@ $<
 

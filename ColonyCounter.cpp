@@ -20,6 +20,15 @@ void ColonyCounter::loadTraining(const char *path)
 	trained = true;
 }
 
+void ColonyCounter::loadTrainingString(const char *data)
+{
+	FileStorage fs(data, FileStorage::READ + FileStorage::MEMORY);
+
+	svm.read(fs.operator *(), fs["my_svm"].operator *());
+	trained = true;
+}
+
+
 void ColonyCounter::saveTraining(const char *path) 
 {
 	svm.save(path);
