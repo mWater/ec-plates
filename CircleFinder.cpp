@@ -5,7 +5,9 @@
 
 
 using namespace cv;
-void timeit(const char *name);
+static void timeit(const char *name) {
+}
+
 
 Rect findPetriRect(Mat img)
 {
