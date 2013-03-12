@@ -109,7 +109,7 @@ void runTest(ColonyCounter& colonyCounter, string path, int redExpected, int blu
 		if ((redExpected == 0 && red > 0)
 			|| ((double)red)/redExpected > 1.2 || ((double)red)/redExpected < 0.8)
 		{
-			printf("########## RED NOT WITHIN TOLERANCES\n\n");
+			printf("RED NOT WITHIN TOLERANCES\n\n");
 			//notOk = true;
 		}
 	}
@@ -131,7 +131,7 @@ void runTests()
 	ColonyCounter colonyCounter;
 	colonyCounter.loadTraining("svm_params.yml");
 
-	FileStorage fs("tests.yml", FileStorage::READ);
+	FileStorage fs("samples/tests.yml", FileStorage::READ);
 
 	double absErrorSum = 0;
 
@@ -146,7 +146,7 @@ void runTests()
 		int blue = (int)(*it)["blue"];
 
 		double error;
-		runTest(colonyCounter, path, red, blue, error);
+		runTest(colonyCounter, "samples/" + path, red, blue, error);
 		absErrorSum += fabs(error);
 
 	}
@@ -172,12 +172,12 @@ int main(int argc, char* argv[])
 		vector<string> labelPaths;
 		for (int k=1;k<=NUM_SAMPLES;k++)
 		{
-			Mat label = imread(format("images/train/%03d_label.png", k));
+			Mat label = imread(format("samples/images/train/%03d_label.png", k));
 			if (label.rows == 0)
 				continue;
 
-			trainPaths.push_back(format("images/%03d.jpg", k));
-			labelPaths.push_back(format("images/train/%03d_label.png", k));
+			trainPaths.push_back(format("samples/images/%03d.jpg", k));
+			labelPaths.push_back(format("samples/train/%03d_label.png", k));
 		}
 		ColonyCounter colonyCounter;
 		colonyCounter.trainClassifier(trainPaths, labelPaths);

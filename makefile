@@ -9,5 +9,7 @@ all: $(OBJ_FILES)
 	g++ -o ec-plates $^ `pkg-config --libs opencv` 
 
 %.o: %.cpp 
-	g++ `pkg-config --cflags opencv` -c -o $@ $<
+	g++ -g `pkg-config --cflags opencv` -c -o $@ $<
 
+clean:
+	rm *.o ec-plates
