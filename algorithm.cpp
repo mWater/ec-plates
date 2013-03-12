@@ -49,11 +49,7 @@ void analyseECPlate(OpenCVActivityContext& context) {
 	Mat screenMat = getScreenTransform(img.size(), screen->size());
 
 	// Create BGR screen
-	Mat screen3(screen->size(), CV_8UC3, Scalar(0,0,0));
-	warpAffine(img, screen3, screenMat, screen3.size());
-
-	// Convert to BGRA before display
-	cvtColor(screen3, *screen, CV_BGR2BGRA);
+	warpAffine(img, *screen, screenMat, screen->size());
 
 	// Find petri img
 	Rect petriRect = findPetriRect(img);
@@ -62,7 +58,7 @@ void analyseECPlate(OpenCVActivityContext& context) {
 	// Draw circle on screen
 	Point center = transformPoint(Point((petriRect.tl()+petriRect.br())*0.5), screenMat);
 	int radius = transformScalar(petriRect.height/2, screenMat);
-	circle(*screen, center, radius, Scalar(0, 0, 255, 255), 2);
+	circle(*screen, center, radius, Scalar(0, 0, 255), 2);
 	context.updateScreen();
 
 	ColonyCounter colonyCounter;
@@ -90,7 +86,7 @@ void analyseECPlate(OpenCVActivityContext& context) {
 	}
 
 	// Show completed
-	circle(*screen, center, radius, Scalar(0, 255, 0, 255), 6);
+	circle(*screen, center, radius, Scalar(0, 255, 0), 6);
 	context.updateScreen();
 
 	// Pause

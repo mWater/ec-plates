@@ -14,6 +14,7 @@ public:
 
 	virtual void setReturnValue(string val) = 0;
 
+	// Gets BGR screen. Must call updateScreen to propagate change
 	virtual Ptr<Mat> getScreen() = 0;
 	virtual void updateScreen() = 0;
 
@@ -65,7 +66,7 @@ public:
 		argc(argc), argv(argv) {
 
 		// Create Mat
-		screen = new Mat(Size(800, 480), CV_8UC4);
+		screen = new Mat(Size(800, 480), CV_8UC3);
 		updateScreen();
 	}
 
