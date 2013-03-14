@@ -6,6 +6,7 @@
 #include "ColonyCounter.h"
 #include "OpenCVActivityContext.h"
 #include "algorithm.h"
+#include "svm_table.h"
 
 using namespace cv;
 
@@ -16,6 +17,8 @@ static int adapC = 10;
 static Mat image;
 
 static double t = 0;
+
+static int quants[] = { 256, 256 };
 
 void timeit(const char *name) {
 	if (name!=NULL) {
@@ -155,6 +158,76 @@ void runTests()
 	printf("Error %f\n", absErrorSum);
 }
 
+void runTestsSVMTable()
+{
+	ColonyCounter colonyCounter;
+	colonyCounter.loadTrainingQuantized(svmLookup, svmQuants);
+
+	FileStorage fs("samples/tests.yml", FileStorage::READ);
+
+	double absErrorSum = 0;
+
+	FileNode features = fs["tests"];
+	FileNodeIterator it = features.begin(), it_end = features.end();
+	int idx = 0;
+	for( ; it != it_end; ++it, idx++ )
+	{
+		string path;
+		(*it)["path"] >> path;
+		int red = (int)(*it)["red"];
+		int blue = (int)(*it)["blue"];
+
+		double error;
+		runTest(colonyCounter, "samples/" + path, red, blue, error);
+		absErrorSum += fabs(error);
+
+	}
+	fs.release();
+
+	printf("Error %f\n", absErrorSum);
+}
+
+void runQuantTests()
+{
+	ColonyCounter colonyCounter;
+	colonyCounter.loadTraining("svm_params.yml");
+
+	FileStorage fs("samples/tests.yml", FileStorage::READ);
+
+	FileNode features = fs["tests"];
+	FileNodeIterator it = features.begin(), it_end = features.end();
+	int idx = 0;
+	for( ; it != it_end; ++it, idx++ )
+	{
+		string path;
+		(*it)["path"] >> path;
+
+		Mat img = imread("samples/" + path);
+
+		// Find petri img
+		Rect petriRect = findPetriRect(img);
+		Mat petri = img(petriRect);
+
+		// Preprocess image
+		petri = colonyCounter.preprocessImage(petri);
+
+		colonyCounter.testQuantization(petri, quants);
+
+		// Classify image
+		Mat debugImg, debugImgq;
+		colonyCounter.classifyImage(petri, true, &debugImg);
+		colonyCounter.classifyImageQuant(petri, true, &debugImgq, quants);
+		imshow("normal", debugImg);
+		imshow("quant", debugImgq);
+		waitKey(0);
+
+		//colonyCounter.testQuantization(petri, quants);
+
+		//colonyCounter.testQuantization(img, quants);
+	}
+	fs.release();
+}
+
 int main(int argc, char* argv[])
 {
 	if (argc == 1) {
@@ -164,7 +237,13 @@ int main(int argc, char* argv[])
 		printf(" %s count-gui <image name> [<colony image file>] [<petri image file>]\nCounts colonies in an image with a gui, saving output to optional files\n\n", appname);
 		printf(" %s train\nRun training (advanced)\n\n", appname);
 		printf(" %s test\nRun tests (advanced)\n\n", appname);
+		printf(" %s testq\nRun tests using quantized lookup table (advanced)\n\n", appname);
+		printf(" %s quant\nRun quantization tests (advanced)\n\n", appname);
 		return 0;
+	}
+
+	if (strcmp(argv[1], "quant") == 0) {
+		runQuantTests();
 	}
 
 	if (strcmp(argv[1], "train") == 0) {
@@ -172,7 +251,7 @@ int main(int argc, char* argv[])
 		vector<string> labelPaths;
 		for (int k=1;k<=NUM_SAMPLES;k++)
 		{
-			Mat label = imread(format("samples/images/train/%03d_label.png", k));
+			Mat label = imread(format("samples/train/%03d_label.png", k));
 			if (label.rows == 0)
 				continue;
 
@@ -180,13 +259,18 @@ int main(int argc, char* argv[])
 			labelPaths.push_back(format("samples/train/%03d_label.png", k));
 		}
 		ColonyCounter colonyCounter;
-		colonyCounter.trainClassifier(trainPaths, labelPaths);
+		colonyCounter.trainClassifier(trainPaths, labelPaths, NULL);
 		colonyCounter.saveTraining("svm_params.yml");
+		colonyCounter.saveTrainingQuantized("svm_table.h", quants);
 		return 0;
 	}
 
 	if (strcmp(argv[1], "test") == 0) {
 		runTests();
+	}
+
+	if (strcmp(argv[1], "testq") == 0) {
+		runTestsSVMTable();
 	}
 
 	if (strcmp(argv[1], "count") == 0) {
