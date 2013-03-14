@@ -4,7 +4,7 @@
 #include "CircleFinder.h"
 #include "ColonyCounter.h"
 #include "OpenCVActivityContext.h"
-#include "svm_params.h"
+#include "svm_table.h"
 
 #include <unistd.h>
 
@@ -62,9 +62,7 @@ void analyseECPlate(OpenCVActivityContext& context) {
 	context.updateScreen();
 
 	ColonyCounter colonyCounter;
-	// Read from string, not disk : 
-	//colonyCounter.loadTraining("svm_params.yml");
-	colonyCounter.loadTrainingString(svm_params);
+	colonyCounter.loadTrainingQuantized(svmLookup, svmQuants);
 
 	// Preprocess image
 	petri = colonyCounter.preprocessImage(petri);
