@@ -50,6 +50,7 @@ void analyseECPlate(OpenCVActivityContext& context) {
 
 	// Create BGR screen
 	warpAffine(img, *screen, screenMat, screen->size());
+	context.updateScreen();
 
 	// Find petri img
 	Rect petriRect = findPetriRect(img);
