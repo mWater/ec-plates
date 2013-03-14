@@ -220,7 +220,7 @@ int main(int argc, char* argv[])
 		vector<string> labelPaths;
 		for (int k=1;k<=NUM_SAMPLES;k++)
 		{
-			Mat label = imread(format("samples/images/train/%03d_label.png", k));
+			Mat label = imread(format("samples/train/%03d_label.png", k));
 			if (label.rows == 0)
 				continue;
 
