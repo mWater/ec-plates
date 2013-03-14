@@ -7,6 +7,8 @@ using namespace cv;
 ColonyCounter::ColonyCounter(void)
 {
 	trained = false;
+	svmLookup = NULL;
+	svmQuants = NULL;
 }
 
 ColonyCounter::~ColonyCounter(void)
@@ -28,10 +30,54 @@ void ColonyCounter::loadTrainingString(const char *data)
 	trained = true;
 }
 
+void ColonyCounter::loadTrainingQuantized(unsigned char *svmLookup, int *svmQuants)
+{
+	this->svmLookup = svmLookup;
+	this->svmQuants = svmQuants;
+	trained = true;
+}
+
 
 void ColonyCounter::saveTraining(const char *path) 
 {
 	svm.save(path);
+}
+
+void ColonyCounter::saveTrainingQuantized(const char *path, int *svmQuants)
+{
+	FILE *file;
+	file = fopen(path, "w");
+	fprintf(file, "static int svmQuants[] = { ");
+	for (int i=0;i<SVM_DIM;i++)
+	{
+		if (i>0)
+			fprintf(file, ",");
+		fprintf(file, "%d", svmQuants[i]);
+	}
+	fprintf(file, "};\n");
+
+	fprintf(file, "static unsigned char svmLookup[] = { ");
+	int index = 0;
+	for (int q1=0;q1<svmQuants[1];q1++)
+	{
+		fprintf(file, "\n");
+		for (int q0=0;q0<svmQuants[0];q0++)
+		{
+			float vals[2];
+			vals[0] = q0 * 1.0 / svmQuants[0];
+			vals[1] = q1 * 1.0 / svmQuants[1];
+			int cls = classifyValues(vals);
+			fprintf(file, " %d", cls);
+
+			if (q0 != svmQuants[0] - 1 || q1 != svmQuants[1] - 1)
+				fprintf(file, ",", cls);
+			index++;
+		}
+	}
+
+	fprintf(file, "};\n");
+
+	fclose(file);
 }
 
 int labelColorToIndex(Vec3b c) 
@@ -49,17 +95,29 @@ void convertColor(Vec3b &color, float *vals)
 {
 	// Get lightness
 	vals[0] = ((float)color(0) + (float)color(1) + (float)color(2))/600;
+	if (vals[0] > 1)
+		vals[0] = 1;
 
 	// Get red vs blue
 	vals[1] = (float)color(2)/(float)(color(0) + color(2));
 
-	// Get green vs blue
-	vals[2] = (float)color(1)/(float)(color(0) + color(1));
+	// Get green vs blue (removed to simplify SVM)
+	//vals[2] = (float)color(1)/(float)(color(0) + color(1));
 }
 
 int ColonyCounter::classifyValues(float* vals) 
 {
 	assert(trained);
+
+	// Use quantization if present
+	if (svmLookup) {
+		// NOTE: Hard coded for SVM dim of 2
+		assert(SVM_DIM == 2);
+		int index = round(vals[1]*(svmQuants[1]-1));
+		index *= svmQuants[0];
+		index += round(vals[0]*(svmQuants[0]-1));
+		return svmLookup[index];
+	}
 
 	Mat sampleMat = Mat(1, SVM_DIM, CV_32F, vals);
 	float response = svm.predict(sampleMat);
@@ -67,7 +125,7 @@ int ColonyCounter::classifyValues(float* vals)
 }
 
 
-void ColonyCounter::trainClassifier(vector<string> trainPaths, vector<string> labelPaths) 
+void ColonyCounter::trainClassifier(vector<string> trainPaths, vector<string> labelPaths, int *quants)
 {
 	// Count training data
 	int trainCnt = 0;
@@ -127,6 +185,12 @@ void ColonyCounter::trainClassifier(vector<string> trainPaths, vector<string> la
 					Vec3b color = trainImg.at<Vec3b>(y,x);
 					float vals[SVM_DIM];
 					convertColor(color, vals);
+
+					// Quantize values if necessary
+					if (quants) {
+						for (int i=0;i<SVM_DIM;i++)
+							vals[i] = roundf(vals[i] * quants[i])/quants[i];
+					}
 
 					for (int i=0;i<SVM_DIM;i++)
 						trainingDataMat.at<float>(n, i) = vals[i];

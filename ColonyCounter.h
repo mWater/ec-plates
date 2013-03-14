@@ -10,11 +10,14 @@ public:
 
 	void loadTraining(const char *path);
 	void loadTrainingString(const char *data);
+	void loadTrainingQuantized(unsigned char *svmLookup, int *svmQuants);
 	void saveTraining(const char *path);
+	void saveTrainingQuantized(const char *path, int *svmQuants);
+
 
 	// Trains the classifier given a set of sample images and label images which indicate
 	// whether certain pixels are background, red colonies or blue colonies
-	void trainClassifier(std::vector<std::string> trainPaths, std::vector<std::string> labelPaths);
+	void trainClassifier(std::vector<std::string> trainPaths, std::vector<std::string> labelPaths, int *quants = NULL);
 
 	// Cleans up and normalizes an extracted petri film rectangle, keeping only the circle 
 	// which fits within the rectangle.
@@ -36,7 +39,13 @@ private:
 	bool trained;
 
 	cv::SVM svm;
-	static const int SVM_DIM = 3;
+	static const int SVM_DIM = 2;
+
+	// Lookup table for SVM values using quantizations
+	unsigned char *svmLookup;
+
+	// Quantization values to use
+	int *svmQuants;
 
 	// Classify a set of values that have been computed from a pixel
 	int classifyValues(float* vals);
