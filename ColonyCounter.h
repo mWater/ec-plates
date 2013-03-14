@@ -23,9 +23,13 @@ public:
 
 	// Classifies pixels within a preprocessed image to determine colony type or background
 	cv::Mat classifyImage(cv::Mat img, bool debug = false, cv::Mat *debugImage = NULL);
+	cv::Mat classifyImageQuant(cv::Mat img, bool debug = false, cv::Mat *debugImage = NULL, int* quants = NULL);
 
 	// Counts colonies in a classified image
 	void countColonies(cv::Mat classified, int& red, int &blue, bool debug = false, cv::Mat *debugImage = NULL);
+
+	// Test a quantization and prints debug info
+	void testQuantization(cv::Mat img, int* quants);
 
 private:
 	// True when svm has been trained

@@ -155,6 +155,49 @@ void runTests()
 	printf("Error %f\n", absErrorSum);
 }
 
+void runQuantTests()
+{
+	ColonyCounter colonyCounter;
+	colonyCounter.loadTraining("svm_params.yml");
+
+	int quants[] = { 80, 80, 20 };
+
+	FileStorage fs("samples/tests.yml", FileStorage::READ);
+
+	FileNode features = fs["tests"];
+	FileNodeIterator it = features.begin(), it_end = features.end();
+	int idx = 0;
+	for( ; it != it_end; ++it, idx++ )
+	{
+		string path;
+		(*it)["path"] >> path;
+
+		Mat img = imread("samples/" + path);
+
+		// Find petri img
+		Rect petriRect = findPetriRect(img);
+		Mat petri = img(petriRect);
+
+		// Preprocess image
+		petri = colonyCounter.preprocessImage(petri);
+
+		colonyCounter.testQuantization(petri, quants);
+
+		// Classify image
+		Mat debugImg, debugImgq;
+		colonyCounter.classifyImage(petri, true, &debugImg);
+		colonyCounter.classifyImageQuant(petri, true, &debugImgq, quants);
+		imshow("normal", debugImg);
+		imshow("quant", debugImgq);
+		waitKey(0);
+
+		//colonyCounter.testQuantization(petri, quants);
+
+		//colonyCounter.testQuantization(img, quants);
+	}
+	fs.release();
+}
+
 int main(int argc, char* argv[])
 {
 	if (argc == 1) {
@@ -164,7 +207,12 @@ int main(int argc, char* argv[])
 		printf(" %s count-gui <image name> [<colony image file>] [<petri image file>]\nCounts colonies in an image with a gui, saving output to optional files\n\n", appname);
 		printf(" %s train\nRun training (advanced)\n\n", appname);
 		printf(" %s test\nRun tests (advanced)\n\n", appname);
+		printf(" %s quant\nRun quantization tests (advanced)\n\n", appname);
 		return 0;
+	}
+
+	if (strcmp(argv[1], "quant") == 0) {
+		runQuantTests();
 	}
 
 	if (strcmp(argv[1], "train") == 0) {
