@@ -47,6 +47,8 @@ void analyseECPlate(OpenCVActivityContext& context) {
 
 	context.log("Reading image");
 
+	// TODO handle null screen
+
 	// Load image
 	Mat img = imread(context.getParam(0));
 
