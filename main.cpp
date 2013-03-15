@@ -27,14 +27,14 @@ void timeit(const char *name) {
 	t = (double)getTickCount();
 }
 
-void testCircles() 
+void runTestCircles()
 {
 	bool debug = false;
 	for (int k=1;k<=4;k++) 
 	{
 		// Load image
-		image = imread(format("images/%03d.jpg", k));
-		Mat refImage = imread(format("images/%03d_circle.png", k));
+		image = imread(format("samples/images/%03d.jpg", k));
+		Mat refImage = imread(format("samples/train/%03d_circle.png", k));
 
 		Vec3f circ = findPetriDish(image);
 		testCirclePerformance(circ, refImage);

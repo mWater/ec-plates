@@ -205,9 +205,11 @@ bool testCirclePerformance(Vec3f circ, Mat refImg)
 	Mat bad = 255-(red+green);
 	long greenIn = sum(green & circleImg)[0];
 	long greenTot = sum(green)[0];
+	long redIn = sum(red & circleImg)[0];
+	long redTot = sum(red)[0];
 	long badIn = sum(bad & circleImg)[0];
-	printf("%5.3f caught %5.3f bad\n", (greenIn * 100.0)/greenTot,
-		(badIn * 100.0) / greenTot);
+	printf("%5.3f caught %5.3f bad %5.3f fringe\n", (greenIn * 100.0)/greenTot,
+		(badIn * 100.0) / greenTot, (redIn * 100.0)/redTot);
 
 	return greenIn > greenTot && badIn == 0;
 }
