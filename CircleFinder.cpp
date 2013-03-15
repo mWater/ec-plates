@@ -14,6 +14,7 @@ Rect findPetriRect(Mat img)
 	Vec3f circ = findPetriDish(img);
 	return Rect(circ[0]-circ[2], circ[1]-circ[2], circ[2]*2, circ[2]*2);
 }
+
 static int maxSize = 1024;
 
 static Mat findEdges(Mat img)
@@ -101,8 +102,7 @@ void findBestCenter(Size imgSize, vector<vector<Point> > contours, double& maxVa
 	}
 }
 
-
-Vec3f findPetriDish(Mat img)
+Vec3f findPetriDish_Old(Mat img)
 {
 	bool debug = false;
 	static int minContourSize = 120;
@@ -195,6 +195,131 @@ Vec3f findPetriDish(Mat img)
 	
 	// Return circle at 94% radius of outside ring to allow for error in detection
 	return Vec3f(maxLoc.x * scaleby, maxLoc.y * scaleby, bestRadIndex * scaleby * 0.94);
+}
+
+Vec3f findPetriDish(Mat img)
+{
+	bool debug = false;
+	static int minContourSize = 120;
+	static int minDistStartEnd = 60;
+	static double minRadius = maxSize / 10;
+	int minContourPoints = 15;
+	double minCenterVal = 5;		// Minimum accumulated center value
+
+	Point center(0,0);
+	double radius = 0;
+
+	// Convert to scaled grayscale image
+	Mat gray;
+	cvtColor(img, gray, CV_BGR2GRAY);
+
+	// Scale to 1024 size
+	double scaleby = max(gray.rows, gray.cols)*1.0/maxSize;
+	Mat resized;
+	resize(gray, resized, Size(), 1.0/scaleby, 1.0/scaleby, INTER_CUBIC);
+	gray = resized;
+
+	if (debug)
+		timeit(NULL);
+
+	Mat edges = findEdges(gray);
+
+	if (debug)
+		timeit("resize and edges");
+
+	// Find contours
+	vector<vector<Point> > contours;
+	vector<Vec4i> hierarchy;
+	findContours(edges, contours, hierarchy, CV_RETR_LIST, CV_CHAIN_APPROX_NONE);
+
+	if (debug)
+		timeit("contours");
+
+	bool firstIter = true;
+
+	do {
+		// Remove small contours and contours with few points
+		vector<vector<Point> > contours2;
+		for (int c=0;c<contours.size();c++) {
+			Rect r = boundingRect(contours[c]);
+
+			if (r.width > minContourSize || r.height > minContourSize) {
+				if (contours[c].size() >= minContourPoints)
+					contours2.push_back(contours[c]);
+			}
+		}
+		contours=contours2;
+
+		if (contours.size() == 0)
+			break;
+
+		// Find best center
+		double maxVal;
+		Point maxLoc;
+		findBestCenter(edges.size(), contours, maxVal, maxLoc, debug);
+
+		if (maxVal < minCenterVal)
+			break;
+
+		// Find distance for all contour points from center
+		Mat dist(gray.rows + gray.cols, 1, CV_32F, Scalar(0));
+		for (int c=0;c<contours.size();c++) {
+			for (int i=0;i<contours[c].size();i++) {
+				dist.at<float>(norm(contours[c][i]-maxLoc))+=1;
+			}
+		}
+
+		// Find best radius
+		GaussianBlur(dist, dist, Size(1, 3), 0, 0.5);
+		double bestRadVal;
+		int bestRadIndex;
+		minMaxIdx(dist, NULL, &bestRadVal, NULL, &bestRadIndex);
+
+		center = maxLoc;
+		radius = bestRadIndex;
+
+		// Remove any contour points not well inside circle to get ready to look again
+		contours2.clear();
+		for (int c=0;c<contours.size();c++)
+		{
+			vector<Point> ctr;
+			for (int i=0;i<contours[c].size();i++)
+			{
+				if (norm(contours[c][i]-maxLoc) <= bestRadIndex - 4)
+					ctr.push_back(contours[c][i]);
+			}
+			if (ctr.size() > 0)
+				contours2.push_back(ctr);
+		}
+		contours=contours2;
+
+		// If first iteration
+		if (firstIter)
+		{
+			// Prevent too small circles from being found
+			minRadius = radius * 0.75;
+		}
+
+		if (debug)
+		{
+			timeit("circle found");
+
+			Mat img2 = img.clone();
+
+			circle(img2, maxLoc * scaleby, bestRadIndex * scaleby, Scalar(0,255,0), 2);
+
+			namedWindow("circ", CV_GUI_EXPANDED);
+			imshow("circ", img2);
+
+			waitKey(0);
+		}
+
+		firstIter = false;
+	} while (true);
+
+
+	// Return circle
+	return Vec3f(center.x * scaleby, center.y * scaleby, radius * scaleby);
 }
 
 bool testCirclePerformance(Vec3f circ, Mat refImg) 
