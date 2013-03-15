@@ -18,6 +18,8 @@ public:
 	virtual Ptr<Mat> getScreen() = 0;
 	virtual void updateScreen() = 0;
 
+	virtual void log(string msg) = 0;
+
 	virtual bool isAborted() = 0;
 };
 
@@ -47,6 +49,10 @@ public:
 	}
 
 	void updateScreen() {
+	}
+
+	void log(string msg) {
+		printf("%s\n", msg.c_str());
 	}
 
 	bool isAborted() {
@@ -91,6 +97,10 @@ public:
 
 	void updateScreen() {
 		imshow("screen", *screen);
+	}
+
+	void log(string msg) {
+		printf("%s\n", msg.c_str());
 	}
 
 	bool isAborted() {

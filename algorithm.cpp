@@ -39,7 +39,14 @@ static double transformScalar(double val, Mat matrix) {
 	return val * matrix.at<double>(0,0);
 }
 
+int tmp2 = 0;
+
 void analyseECPlate(OpenCVActivityContext& context) {
+	string tmp = format("### COUNT %d", tmp2++);
+	context.log(tmp);
+
+	context.log("Reading image");
+
 	// Load image
 	Mat img = imread(context.getParam(0));
 
@@ -48,13 +55,19 @@ void analyseECPlate(OpenCVActivityContext& context) {
 	// Create affine transform for screen
 	Mat screenMat = getScreenTransform(img.size(), screen->size());
 
+	context.log("Creating screen");
+
 	// Create BGR screen
 	warpAffine(img, *screen, screenMat, screen->size());
 	context.updateScreen();
 
+	context.log("Finding petri image");
+
 	// Find petri img
 	Rect petriRect = findPetriRect(img);
 	Mat petri = img(petriRect);
+
+	context.log("Drawing circle");
 
 	// Draw circle on screen
 	Point center = transformPoint(Point((petriRect.tl()+petriRect.br())*0.5), screenMat);
@@ -62,8 +75,12 @@ void analyseECPlate(OpenCVActivityContext& context) {
 	circle(*screen, center, radius, Scalar(0, 0, 255), 2);
 	context.updateScreen();
 
+	context.log("Loading training");
+
 	ColonyCounter colonyCounter;
 	colonyCounter.loadTrainingQuantized(svmLookup, svmQuants);
+
+	context.log("Preprocessing image");
 
 	// Preprocess image
 	petri = colonyCounter.preprocessImage(petri);
@@ -72,8 +89,12 @@ void analyseECPlate(OpenCVActivityContext& context) {
 		imwrite(context.getParam(2), petri);
 	}
 
+	context.log("Classifying image");
+
 	// Classify image
 	Mat classified = colonyCounter.classifyImage(petri);
+
+	context.log("Counting colonies");
 
 	// Count colonies
 	int red, blue;
@@ -84,12 +105,16 @@ void analyseECPlate(OpenCVActivityContext& context) {
 		imwrite(context.getParam(1), debugImage);
 	}
 
+	context.log("Showing results");
+
 	// Show completed
 	circle(*screen, center, radius, Scalar(0, 255, 0), 6);
 	context.updateScreen();
 
 	// Pause
 	sleep(2);
+
+	context.log("Done");
 
 	context.setReturnValue(format("{\"tc\": %d, \"ecoli\": %d, \"algorithm\": \"2013-02-14\"}", red, blue));
 }
