@@ -39,12 +39,7 @@ static double transformScalar(double val, Mat matrix) {
 	return val * matrix.at<double>(0,0);
 }
 
-int tmp2 = 0;
-
 void analyseECPlate(OpenCVActivityContext& context) {
-	string tmp = format("### COUNT %d", tmp2++);
-	context.log(tmp);
-
 	context.log("Reading image");
 
 	// TODO handle null screen

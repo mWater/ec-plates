@@ -239,6 +239,7 @@ int main(int argc, char* argv[])
 		printf(" %s test\nRun tests (advanced)\n\n", appname);
 		printf(" %s testq\nRun tests using quantized lookup table (advanced)\n\n", appname);
 		printf(" %s quant\nRun quantization tests (advanced)\n\n", appname);
+		printf(" %s test-circles\nRun circle tests (advanced)\n\n", appname);
 		return 0;
 	}
 
@@ -271,6 +272,10 @@ int main(int argc, char* argv[])
 
 	if (strcmp(argv[1], "testq") == 0) {
 		runTestsSVMTable();
+	}
+
+	if (strcmp(argv[1], "test-circles") == 0) {
+		runTestCircles();
 	}
 
 	if (strcmp(argv[1], "count") == 0) {

@@ -14,19 +14,100 @@ Rect findPetriRect(Mat img)
 	Vec3f circ = findPetriDish(img);
 	return Rect(circ[0]-circ[2], circ[1]-circ[2], circ[2]*2, circ[2]*2);
 }
+static int maxSize = 1024;
 
-Vec3f findPetriDish(Mat img) 
+static Mat findEdges(Mat img)
+{
+	static int cannyParam1 = 30;
+
+	// Smooth image
+	GaussianBlur(img, img, Size(9,9), 1, 1);
+
+	// Find edges 
+	Mat edges;
+	Canny(img, edges, cannyParam1, cannyParam1/2);
+
+	return edges;
+}
+
+void findBestCenter(Size imgSize, vector<vector<Point> > contours, double& maxVal, Point& maxLoc, bool debug)
+{
+	static int iterations = 10000;
+	static int minDistStartEnd = 40;
+	static double minRadius = maxSize / 10;
+
+	// Create array to total possible centers in
+	Mat centers(imgSize, CV_32F, Scalar(0.0));
+
+	if (debug)
+		timeit("finding centers...");
+
+	// Start finding circles
+	for (int iter=0;iter<iterations;iter++)
+	{
+		// Select random contour
+		//int ctr = contourIndex[rand() % contourIndex.size()];
+		int ctr = rand() % contours.size();
+
+		// Pick random start point
+		Point2d start = contours[ctr][rand() % contours[ctr].size()];
+
+		// Pick random end point
+		Point2d end = contours[ctr][rand() % contours[ctr].size()];
+
+		// If not far enough apart, skip
+		double dist = norm(start-end);
+		if (dist<minDistStartEnd)
+			continue;
+
+		// Pick random third point
+		Point2d third = contours[ctr][rand() % contours[ctr].size()];
+		if (norm(third-start)<minDistStartEnd)
+			continue;
+		if (norm(third-end)<minDistStartEnd)
+			continue;
+
+		// Find circle of best fit
+		Circle circ(start, end, third);
+		if (circ.GetRadius() < minRadius)
+			continue;
+
+		// Put center on image to total where centers are
+		if (circ.GetCenter().inside(Rect(0,0,imgSize.width, imgSize.height)))
+			centers.at<float>(circ.GetCenter().y, circ.GetCenter().x)+=1.0;
+	}
+
+	if (debug)
+		timeit("centers");
+
+	// Smooth centers
+	GaussianBlur(centers, centers, Size(9, 9), 1, 1);
+
+	// Find best center
+	minMaxLoc(centers, NULL, &maxVal, NULL, &maxLoc);
+
+	if (debug)
+	{
+		// Histogram adjust
+		centers = centers * (1/maxVal);
+
+		// Draw ref point
+		line(centers, maxLoc-Point(0,20), maxLoc-Point(0,40), Scalar(1));
+		line(centers, maxLoc-Point(20,0), maxLoc-Point(40,0), Scalar(1));
+
+		// Draw contours
+		drawContours(centers, contours, -1, Scalar(0.5));
+		imshow("centers", centers);
+	}
+}
+
+
+Vec3f findPetriDish(Mat img)
 {
 	bool debug = false;
-	static int cannyParam1 = 30;
-	static int maxSize = 1024;
 	static int minContourSize = 120;
 	static int minDistStartEnd = 40;
 	static double minRadius = maxSize / 10;
-	static int iterations = 10000;
-
-	if (debug)
-		timeit(NULL);
 
 	// Convert to scaled grayscale image
 	Mat gray;
@@ -35,15 +116,13 @@ Vec3f findPetriDish(Mat img)
 	// Scale to 1024 size
 	double scaleby = max(gray.rows, gray.cols)*1.0/maxSize;
 	Mat resized;
-	resize(gray, resized, Size(), 1.0/scaleby, 1.0/scaleby, INTER_CUBIC); 
+	resize(gray, resized, Size(), 1.0/scaleby, 1.0/scaleby, INTER_CUBIC);
 	gray = resized;
 
-	// Smooth image
-	GaussianBlur(gray, gray, Size(9,9), 1, 1);
+	if (debug)
+		timeit(NULL);
 
-	// Find edges 
-	Mat edges;
-	Canny(gray, edges, cannyParam1, cannyParam1/2);
+	Mat edges = findEdges(gray);
 
 	if (debug)
 		timeit("resize and edges");
@@ -66,71 +145,10 @@ Vec3f findPetriDish(Mat img)
 	}
 	contours=contours2;
 
-	// Create array to total possible centers in
-	Mat centers(gray.rows, gray.cols, CV_32F, Scalar(0.0));
-
-	if (debug)
-		timeit("finding centers...");
-	
-	// Start finding circles
-	for (int iter=0;iter<iterations;iter++) 
-	{
-		// Select random contour 
-		//int ctr = contourIndex[rand() % contourIndex.size()];
-		int ctr = rand() % contours.size();
-		
-		// Pick random start point
-		Point2d start = contours[ctr][rand() % contours[ctr].size()];
-
-		// Pick random end point
-		Point2d end = contours[ctr][rand() % contours[ctr].size()];
-
-		// If not far enough apart, skip
-		double dist = norm(start-end);
-		if (dist<minDistStartEnd) 
-			continue;
-
-		// Pick random third point
-		Point2d third = contours[ctr][rand() % contours[ctr].size()];
-		if (norm(third-start)<minDistStartEnd)
-			continue;
-		if (norm(third-end)<minDistStartEnd)
-			continue;
-
-		// Find circle of best fit
-		Circle circ(start, end, third);
-		if (circ.GetRadius() < minRadius)
-			continue;
-		
-		// Put center on image to total where centers are
-		if (circ.GetCenter().inside(Rect(0,0,gray.cols, gray.rows)))
-			centers.at<float>(circ.GetCenter().y, circ.GetCenter().x)+=1.0;
-	}
-
-	if (debug)
-		timeit("centers");
-
-	// Smooth centers
-	GaussianBlur(centers, centers, Size(9, 9), 1, 1);
-
 	// Find best center
 	double maxVal;
 	Point maxLoc;
-	minMaxLoc(centers, NULL, &maxVal, NULL, &maxLoc);
-
-	if (debug) 
-	{
-		// Histogram adjust
-		centers = centers * (1/maxVal);
-
-		// Draw ref point
-		line(centers, maxLoc-Point(0,20), maxLoc-Point(0,40), Scalar(1));
-		line(centers, maxLoc-Point(20,0), maxLoc-Point(40,0), Scalar(1));
-
-		// Draw contours
-		drawContours(centers, contours, -1, Scalar(0.5));
-		imshow("centers", centers);
-	}
+	findBestCenter(edges.size(), contours, maxVal, maxLoc, debug);
 
 	// Find distance for all contour points from center
 	Mat dist(gray.rows + gray.cols, 1, CV_32F, Scalar(0));
