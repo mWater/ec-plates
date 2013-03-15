@@ -312,9 +312,9 @@ static vector<vector<Point> > countType(Mat classified, int type)
 	Mat kernel = getStructuringElement(MORPH_CROSS, Size(3, 3));
 	erode(mask, mask, kernel);
 	dilate(mask, mask, kernel);
-	//erode(mask, mask, kernel);
+	erode(mask, mask, kernel);
 
-	// Dilate, erode to remove small
+	// Dilate, erode to join colonies
 	kernel = getStructuringElement(MORPH_ELLIPSE, Size(5, 5));
 	dilate(mask, mask, kernel);
 	erode(mask, mask, kernel);
@@ -326,12 +326,14 @@ static vector<vector<Point> > countType(Mat classified, int type)
 	vector<Vec4i> hierarchy;
 	findContours(mask, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
+	int minArea = 4;
+
 	// For each suitable one
 	vector<vector<Point> > goodContours;
 	for (int i=0;i<contours.size();i++) 
 	{
-//		if (contourArea(contours[i])>4)
-		goodContours.push_back(contours[i]);
+		if (contourArea(contours[i])>=minArea)
+			goodContours.push_back(contours[i]);
 	}
 	return goodContours;
 }

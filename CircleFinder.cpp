@@ -199,9 +199,9 @@ Vec3f findPetriDish_Old(Mat img)
 
 Vec3f findPetriDish(Mat img)
 {
-	bool debug = false;
+	bool debug = true;
 	static int minContourSize = 120;
-	static int minDistStartEnd = 60;
+	static int minDistStartEnd = 30;
 	static double minRadius = maxSize / 10;
 	int minContourPoints = 15;
 	double minCenterVal = 5;		// Minimum accumulated center value
@@ -270,13 +270,13 @@ Vec3f findPetriDish(Mat img)
 		}
 
 		// Find best radius
-		GaussianBlur(dist, dist, Size(1, 3), 0, 0.5);
+		GaussianBlur(dist, dist, Size(1, 3), 0, 1);
 		double bestRadVal;
 		int bestRadIndex;
 		minMaxIdx(dist, NULL, &bestRadVal, NULL, &bestRadIndex);
 
 		center = maxLoc;
-		radius = bestRadIndex;
+		radius = bestRadIndex - 1;		// Move inside points
 
 		// Remove any contour points not well inside circle to get ready to look again
 		contours2.clear();
@@ -297,7 +297,7 @@ Vec3f findPetriDish(Mat img)
 		if (firstIter)
 		{
 			// Prevent too small circles from being found
-			minRadius = radius * 0.75;
+			minRadius = radius * 0.80;
 		}
 
 		if (debug)

@@ -117,7 +117,7 @@ void runTest(ColonyCounter& colonyCounter, string path, int redExpected, int blu
 		}
 	}
 	if ((blueExpected == 0 && blue > 0) 
-		|| (blueExpected > 0) && (((double)blue)/blueExpected > 1.2 || ((double)blue)/blueExpected < 0.8))
+		|| (blueExpected > 0) && (((double)blue)/blueExpected > 1.1 || ((double)blue)/blueExpected < 0.9))
 	{
 		printf("########## BLUE NOT WITHIN TOLERANCES\n\n");
 		notOk = true;
