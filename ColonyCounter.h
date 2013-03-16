@@ -9,7 +9,6 @@ public:
 	~ColonyCounter(void);
 
 	void loadTraining(const char *path);
-	void loadTrainingString(const char *data);
 	void loadTrainingQuantized(unsigned char *svmLookup, int *svmQuants);
 	void saveTraining(const char *path);
 	void saveTrainingQuantized(const char *path, int *svmQuants);

@@ -113,5 +113,5 @@ void analyseECPlate(OpenCVActivityContext& context) {
 
 	context.log("Done");
 
-	context.setReturnValue(format("{\"tc\": %d, \"ecoli\": %d, \"algorithm\": \"2013-02-14\"}", red, blue));
+	context.setReturnValue(format("{\"tc\": %d, \"ecoli\": %d, \"algorithm\": \"2013-03-15\"}", red, blue));
 }

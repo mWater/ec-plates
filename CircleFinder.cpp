@@ -199,7 +199,7 @@ Vec3f findPetriDish_Old(Mat img)
 
 Vec3f findPetriDish(Mat img)
 {
-	bool debug = true;
+	bool debug = false;
 	static int minContourSize = 120;
 	static int minDistStartEnd = 30;
 	static double minRadius = maxSize / 10;
