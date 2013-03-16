@@ -39,24 +39,26 @@ static double transformScalar(double val, Mat matrix) {
 	return val * matrix.at<double>(0,0);
 }
 
+//	// Create affine transform for screen
+//	Mat screenMat = getScreenTransform(img.size(), screen->size());
+//
+//	context.log("Creating screen");
+//
+//	// Create BGR screen
+//	warpAffine(img, *screen, screenMat, screen->size());
+//	context.updateScreen();
+
 void analyseECPlate(OpenCVActivityContext& context) {
 	context.log("Reading image");
 
-	// TODO handle null screen
-
 	// Load image
 	Mat img = imread(context.getParam(0));
+	if (img.empty()) {
+		context.setReturnValue("{\"error\":\"Image file not found\"}");
+		return;
+	}
 
-	Ptr<Mat> screen = context.getScreen();
-
-	// Create affine transform for screen
-	Mat screenMat = getScreenTransform(img.size(), screen->size());
-
-	context.log("Creating screen");
-
-	// Create BGR screen
-	warpAffine(img, *screen, screenMat, screen->size());
-	context.updateScreen();
+	context.updateScreen(img);
 
 	context.log("Finding petri image");
 
@@ -70,14 +72,7 @@ void analyseECPlate(OpenCVActivityContext& context) {
 	}
 
 	Mat petri = img(petriRect);
-
-	context.log("Drawing circle");
-
-	// Draw circle on screen
-	Point center = transformPoint(Point((petriRect.tl()+petriRect.br())*0.5), screenMat);
-	int radius = transformScalar(petriRect.height/2, screenMat);
-	circle(*screen, center, radius, Scalar(0, 0, 255), 2);
-	context.updateScreen();
+	context.updateScreen(petri);
 
 	context.log("Loading training");
 
@@ -88,6 +83,7 @@ void analyseECPlate(OpenCVActivityContext& context) {
 
 	// Preprocess image
 	petri = colonyCounter.preprocessImage(petri);
+	context.updateScreen(petri);
 
 	if (context.getParamCount() >= 3) {
 		imwrite(context.getParam(2), petri);
@@ -96,24 +92,22 @@ void analyseECPlate(OpenCVActivityContext& context) {
 	context.log("Classifying image");
 
 	// Classify image
-	Mat classified = colonyCounter.classifyImage(petri);
+	Mat debugImage;
+	Mat classified = colonyCounter.classifyImage(petri, true, &debugImage);
+	context.updateScreen(debugImage);
 
 	context.log("Counting colonies");
 
 	// Count colonies
 	int red, blue;
-	Mat debugImage;
 	colonyCounter.countColonies(classified, red, blue, true, &debugImage);
+	context.updateScreen(debugImage);
 
 	if (context.getParamCount() >= 2) {
 		imwrite(context.getParam(1), debugImage);
 	}
 
 	context.log("Showing results");
-
-	// Show completed
-	circle(*screen, center, radius, Scalar(0, 255, 0), 6);
-	context.updateScreen();
 
 	// Pause
 	sleep(2);

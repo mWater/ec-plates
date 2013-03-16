@@ -15,9 +15,7 @@ public:
 
 	virtual void setReturnValue(string val) = 0;
 
-	// Gets BGR screen. Must call updateScreen to propagate change
-	virtual Ptr<Mat> getScreen() = 0;
-	virtual void updateScreen() = 0;
+	virtual void updateScreen(Mat& screen) = 0;
 
 	virtual void log(string msg) = 0;
 
@@ -45,11 +43,7 @@ public:
 		returnValue = val;
 	}
 
-	Ptr<Mat> getScreen() {
-		return NULL;
-	}
-
-	void updateScreen() {
+	void updateScreen(Mat& screen) {
 	}
 
 	void log(string msg) {
@@ -71,10 +65,6 @@ class DesktopOpenCVActivityContext : public OpenCVActivityContext {
 public:
 	DesktopOpenCVActivityContext(int argc, char* argv[]) :
 		argc(argc), argv(argv) {
-
-		// Create Mat
-		screen = new Mat(Size(800, 480), CV_8UC3);
-		updateScreen();
 	}
 
 	~DesktopOpenCVActivityContext() {
@@ -92,12 +82,9 @@ public:
 		returnValue = val;
 	}
 
-	Ptr<Mat> getScreen() {
-		return screen;
-	}
-
-	void updateScreen() {
-		imshow("screen", *screen);
+	void updateScreen(Mat& screen) {
+		imshow("screen", screen);
+		waitKey(500);
 	}
 
 	void log(string msg) {
@@ -113,7 +100,6 @@ public:
 private:
 	int argc;
 	char** argv;
-	Ptr<Mat> screen;
 };
 
 
