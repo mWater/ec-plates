@@ -62,6 +62,13 @@ void analyseECPlate(OpenCVActivityContext& context) {
 
 	// Find petri img
 	Rect petriRect = findPetriRect(img);
+
+	if (petriRect.height == 0) {
+		context.log("Circle not found");
+		context.setReturnValue("{\"error\":\"EC Plate not detected\"}");
+		return;
+	}
+
 	Mat petri = img(petriRect);
 
 	context.log("Drawing circle");
