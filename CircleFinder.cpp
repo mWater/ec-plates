@@ -199,12 +199,12 @@ Vec3f findPetriDish_Old(Mat img)
 
 Vec3f findPetriDish(Mat img)
 {
-	bool debug = false;
+	bool debug = true;
 	static int minContourSize = 120;
 	static int minDistStartEnd = 30;
 	static double minRadius = maxSize / 10;
 	int minContourPoints = 15;
-	double minCenterVal = 5;		// Minimum accumulated center value
+	double minCenterVal = 1;		// Minimum accumulated center value
 
 	Point center(0,0);
 	double radius = 0;
@@ -259,6 +259,25 @@ Vec3f findPetriDish(Mat img)
 		findBestCenter(edges.size(), contours, maxVal, maxLoc, debug);
 
 		if (maxVal < minCenterVal)
+			break;
+
+		// Ensure that points on at least 3 quadrants are present to prevent small arcs from causing errors
+		bool quadrants[] = { false, false, false, false };
+		for (int c=0;c<contours.size();c++) {
+			for (int i=0;i<contours[c].size();i++) {
+				Point p = contours[c][i] - maxLoc;
+				if (p.x > 0)
+					quadrants[p.y > 0 ? 1 : 0] = true;
+				else
+					quadrants[p.y > 0 ? 3 : 2] = true;
+			}
+		}
+		int totalQuadrants = 0;
+		for (int i=0;i<4;i++) {
+			if (quadrants[i])
+				totalQuadrants++;
+		}
+		if (totalQuadrants<3)
 			break;
 
 		// Find distance for all contour points from center

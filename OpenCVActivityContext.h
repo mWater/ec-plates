@@ -84,7 +84,7 @@ public:
 
 	void updateScreen(Mat& screen) {
 		imshow("screen", screen);
-		waitKey(500);
+		waitKey(0);
 	}
 
 	void log(string msg) {
