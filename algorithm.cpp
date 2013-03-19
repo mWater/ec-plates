@@ -11,43 +11,6 @@
 using namespace cv;
 using namespace std;
 
-static Mat getScreenTransform(Size image, Size screen) {
-	Point2f srcTri[3];
-	Point2f dstTri[3];
-
-	// Set 3 points to calculate the Affine Transform
-	srcTri[0] = Point2f(0, 0);
-	srcTri[1] = Point2f(image.width - 1, 0);
-	srcTri[2] = Point2f(0, image.height - 1);
-
-	// Calculate scale
-	double scale = min(screen.width * 1.0 / image.width, screen.height * 1.0 / image.height);
-
-	dstTri[0] = Point2f(0, 0);
-	dstTri[1] = srcTri[1]*scale;
-	dstTri[2] = srcTri[2]*scale;
-
-	return getAffineTransform(srcTri, dstTri);
-}
-
-static Point transformPoint(Point pt, Mat matrix) {
-	Mat pt2 = matrix * Mat(Vec3d(pt.x, pt.y, 1));
-	return Point(pt2.at<double>(0), pt2.at<double>(1));
-}
-
-static double transformScalar(double val, Mat matrix) {
-	return val * matrix.at<double>(0,0);
-}
-
-//	// Create affine transform for screen
-//	Mat screenMat = getScreenTransform(img.size(), screen->size());
-//
-//	context.log("Creating screen");
-//
-//	// Create BGR screen
-//	warpAffine(img, *screen, screenMat, screen->size());
-//	context.updateScreen();
-
 void analyseECPlate(OpenCVActivityContext& context) {
 	context.log("Reading image");
 
