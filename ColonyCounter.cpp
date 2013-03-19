@@ -151,7 +151,7 @@ void ColonyCounter::trainClassifier(vector<string> trainPaths, vector<string> la
 	}
 
 	// Create matricies for training
-    Mat labelsMat(trainCnt, 1, CV_32FC1);
+    Mat labelsMat(trainCnt, 1, CV_32SC1);
     Mat trainingDataMat(trainCnt, SVM_DIM, CV_32FC1);
 	long n = 0;
 	for (int k=0;k<trainPaths.size();k++)
@@ -186,7 +186,7 @@ void ColonyCounter::trainClassifier(vector<string> trainPaths, vector<string> la
 
 					for (int i=0;i<SVM_DIM;i++)
 						trainingDataMat.at<float>(n, i) = vals[i];
-					labelsMat.at<float>(n,0) = label;
+					labelsMat.at<int>(n,0) = label;
 					n++;
 				}
 			}
