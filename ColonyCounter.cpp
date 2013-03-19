@@ -133,6 +133,7 @@ void ColonyCounter::trainClassifier(vector<string> trainPaths, vector<string> la
 
 		// Load label image
 		Mat labelImg = imread(labelPaths[k]);
+		labelImg = labelImg(petriRects[k]);
 
 		// Count training data
 		for (int x=0;x<labelImg.cols;x++)
@@ -153,7 +154,7 @@ void ColonyCounter::trainClassifier(vector<string> trainPaths, vector<string> la
 	// Create matricies for training
     Mat labelsMat(trainCnt, 1, CV_32SC1);
     Mat trainingDataMat(trainCnt, SVM_DIM, CV_32FC1);
-	long n = 0;
+	int n = 0;
 	for (int k=0;k<trainPaths.size();k++)
 	{
 		// Load label image
@@ -295,6 +296,16 @@ Mat ColonyCounter::preprocessImage(Mat petri, Scalar& backgroundColor)
 	return highpass;
 }
 
+/* Calculate the circularity of a contour */
+static double calcCircularity(vector<Point> contour) {
+	// Check circularity
+	double perimeter = arcLength(contour, true);
+	double area = contourArea(contour);
+	double circularity = 4 * 3.14159265 * area / (perimeter * perimeter);
+	return circularity;
+}
+
+
 static vector<vector<Point> > countType(Mat classified, int type) 
 {
 	// Get type mask
@@ -319,13 +330,20 @@ static vector<vector<Point> > countType(Mat classified, int type)
 	findContours(mask, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
 
 	int minArea = 4;
+	double minCircularity = 0.2;
 
 	// For each suitable one
 	vector<vector<Point> > goodContours;
 	for (int i=0;i<contours.size();i++) 
 	{
+		// Make sure area is sufficiently large
 		if (contourArea(contours[i])>=minArea)
-			goodContours.push_back(contours[i]);
+		{
+			// Check circularity
+			double circularity = calcCircularity(contours[i]);
+			if (circularity > minCircularity)
+				goodContours.push_back(contours[i]);
+		}
 	}
 	return goodContours;
 }
