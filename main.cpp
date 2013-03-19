@@ -10,15 +10,14 @@
 
 using namespace cv;
 
-static int param1 = 160;
-static int adapSize = 3;
-static int adapC = 10;
-
 static Mat image;
 
 static double t = 0;
 
 static int quants[] = { 256, 256 };
+
+static const int NUM_SAMPLES = 12;
+
 
 void timeit(const char *name) {
 	if (name!=NULL) {
@@ -47,27 +46,6 @@ void runTestCircles()
 		}
 	}
 }
-
-
-static const int NUM_SAMPLES = 11;
-
-//void batchExtractPetri(ColonyCounter& colonyCounter) 
-//{
-//	for (int k=1;k<=NUM_SAMPLES;k++)
-//	{
-//		// Extract petri
-//		Mat img = imread(format("images/%03d.jpg", k));
-//		Rect petriRect;
-//		Mat petri = colonyCounter.preprocessImage(img, petriRect);
-//		imwrite(format("images/output/%03d_petri.jpg", k), petri);
-//
-//		// Crop label if present
-//		Mat labelImg = imread(format("images/train/%03d_label.png", k));
-//		if (labelImg.rows == 0)
-//			continue;
-//		imwrite(format("images/output/%03d_petri_label.png", k), labelImg(petriRect));
-//	}
-//}
 
 void runTest(ColonyCounter& colonyCounter, string path, int redExpected, int blueExpected, double &error) 
 {
@@ -100,11 +78,7 @@ void runTest(ColonyCounter& colonyCounter, string path, int redExpected, int blu
 		error = (((double)blue)/blueExpected - 1) * 100;
 	}
 
-	printf("%s: Red=%3d vs %3d     Blue=%3d vs %3d    Error: %5.1f\n", path.c_str(), 
-		red, redExpected, blue, blueExpected, error);
-
-
-	bool notOk = false;
+	bool redNotOk = false, blueNotOk = false;
 
 	// Check if within 20%
 	if (redExpected >=0) 
@@ -112,21 +86,26 @@ void runTest(ColonyCounter& colonyCounter, string path, int redExpected, int blu
 		if ((redExpected == 0 && red > 0)
 			|| ((double)red)/redExpected > 1.2 || ((double)red)/redExpected < 0.8)
 		{
-			printf("RED NOT WITHIN TOLERANCES\n\n");
-			//notOk = true;
+			redNotOk = true;
 		}
 	}
 	if ((blueExpected == 0 && blue > 0) 
-		|| (blueExpected > 0) && (((double)blue)/blueExpected > 1.1 || ((double)blue)/blueExpected < 0.9))
+		|| ((blueExpected > 0) && (((double)blue)/blueExpected > 1.2 || ((double)blue)/blueExpected < 0.8)))
 	{
-		printf("########## BLUE NOT WITHIN TOLERANCES\n\n");
-		notOk = true;
+		blueNotOk = true;
 	}
-	if (notOk) {
-		imshow(path, debugImage);
-		imshow(path + " - petri", petri);
-		waitKey(0);
-	}
+
+	printf("[%6s] %s:   Blue=%3d (%3d)%s    Red=%3d (%3d)%s\n",
+		blueNotOk || redNotOk ? "wrong" : "ok",
+		path.c_str(),
+		blue, blueExpected, blueNotOk ? "*" : " ",
+		red, redExpected, redNotOk ? "*" : " ");
+
+//	if (blueNotOk) {
+//		imshow(path, debugImage);
+//		imshow(path + " - petri", petri);
+//		waitKey(0);
+//	}
 }
 
 void runTests() 
