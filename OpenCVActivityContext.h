@@ -37,8 +37,8 @@ public:
  */
 class ConsoleOpenCVActivityContext : public OpenCVActivityContext {
 public:
-	ConsoleOpenCVActivityContext(int argc, char* argv[]) :
-		argc(argc), argv(argv) {
+	ConsoleOpenCVActivityContext(int argc, char* argv[], bool logging) :
+		argc(argc), argv(argv), logging(logging) {
 	}
 
 	~ConsoleOpenCVActivityContext() {
@@ -60,7 +60,8 @@ public:
 	}
 
 	void log(string msg) {
-		printf("%s\n", msg.c_str());
+		if (logging)
+			printf("%s\n", msg.c_str());
 	}
 
 	bool isAborted() {
@@ -72,6 +73,7 @@ public:
 private:
 	int argc;
 	char** argv;
+	bool logging;
 };
 
 /*

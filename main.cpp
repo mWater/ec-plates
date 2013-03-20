@@ -278,7 +278,7 @@ int main(int argc, char* argv[])
 	}
 
 	if (strcmp(argv[1], "count") == 0) {
-		ConsoleOpenCVActivityContext context(argc-2, argv+2);
+		ConsoleOpenCVActivityContext context(argc-2, argv+2, false);
 		analyseECPlate(context);
 		printf("%s\n", context.returnValue.c_str());
 	}
