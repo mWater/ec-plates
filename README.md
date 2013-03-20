@@ -15,3 +15,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -------------
 
+Analyzes an EC Compact Dry Plate using OpenCV. 
+
+See algorithm.cpp for details on how the algorithm detects E. coli
+and Total Coliform bacteria colonies.
+
+main.cpp defines a number of command line operations to test, train and 
+run the algorithm. algorithm.cpp is designed to be able to be called
+from both the desktop, console and via Android+jni.

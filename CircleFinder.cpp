@@ -5,18 +5,23 @@
 
 
 using namespace cv;
+
 static void timeit(const char *name) {
 }
 
-
+/*
+ * Finds the rectangle which fits around the Petri dish circle that has been detected
+ */
 Rect findPetriRect(Mat img)
 {
 	Vec3f circ = findPetriDish(img);
 	return Rect(circ[0]-circ[2], circ[1]-circ[2], circ[2]*2, circ[2]*2);
 }
 
+// maximum size of the image to process.  If larger, will be scaled
 static int maxSize = 1024;
 
+// Finds edges in the image
 static Mat findEdges(Mat img)
 {
 	static int cannyParam1 = 30;
@@ -31,6 +36,15 @@ static Mat findEdges(Mat img)
 	return edges;
 }
 
+/*
+ * Finds the most likely centerpoint of circles that are present in a set of contours.
+ * It does this by randomly sampling sets of three points from each contour.
+ * With these three points, it determines the circle that passes through these three points.
+ * The circle center is then incremented in another zeroed matrix.
+ * The point that has the most number of increments is the most likely center.
+ * This is done instead of HoughCircles as the Petri dish has multiple near-concentric
+ * circles, which confuses the HoughCircles algorithm
+ */
 void findBestCenter(Size imgSize, vector<vector<Point> > contours, double& maxVal, Point& maxLoc, bool debug)
 {
 	static int iterations = 10000;
@@ -47,7 +61,6 @@ void findBestCenter(Size imgSize, vector<vector<Point> > contours, double& maxVa
 	for (int iter=0;iter<iterations;iter++)
 	{
 		// Select random contour
-		//int ctr = contourIndex[rand() % contourIndex.size()];
 		int ctr = rand() % contours.size();
 
 		// Pick random start point
@@ -102,14 +115,20 @@ void findBestCenter(Size imgSize, vector<vector<Point> > contours, double& maxVa
 	}
 }
 
+/*
+ * Finds the circle of the Petri dish within an image.
+ * It does so by iteratively finding the strongest circle, eliminating all contours outside of it
+ * and then looking for any further circles within it, down to a minimum radius based on the
+ * original circle.
+ */
 Vec3f findPetriDish(Mat img)
 {
-	bool debug = false;
-	static int minContourSize = 120;
-	static int minDistStartEnd = 30;
-	static double minRadius = maxSize / 10;
-	int minContourPoints = 15;
-	double minCenterVal = 1;		// Minimum accumulated center value
+	bool debug = false;							// True to display progress images
+	static int minContourSize = 120;			// Minimum size in pixels of a contour to be considered
+	static int minDistStartEnd = 30;			// Minimum distance between a start and end point of any two of the three points
+	static double minRadius = maxSize / 10;		// Minimum radius of the circle
+	int minContourPoints = 15;					// Minimum number of contour points in a contour
+	double minCenterVal = 1;					// Minimum accumulated center value
 
 	Point center(0,0);
 	double radius = 0;
@@ -127,6 +146,7 @@ Vec3f findPetriDish(Mat img)
 	if (debug)
 		timeit(NULL);
 
+	// Find edges in the image
 	Mat edges = findEdges(gray);
 
 	if (debug)
@@ -163,10 +183,12 @@ Vec3f findPetriDish(Mat img)
 		Point maxLoc;
 		findBestCenter(edges.size(), contours, maxVal, maxLoc, debug);
 
+		// If center is in sufficiently strong, exit
 		if (maxVal < minCenterVal)
 			break;
 
 		// Ensure that points on at least 3 quadrants are present to prevent small arcs from causing errors
+		// Arcs that do not include at least three quadrants are likely to give erroneous centerpoints
 		bool quadrants[] = { false, false, false, false };
 		for (int c=0;c<contours.size();c++) {
 			for (int i=0;i<contours[c].size();i++) {
@@ -241,14 +263,18 @@ Vec3f findPetriDish(Mat img)
 		firstIter = false;
 	} while (true);
 
-
-	// Move inside outer edge
+	// Move inside outer edge to avoid edge effects
 	radius *= 0.975;
 
 	// Return circle
 	return Vec3f(center.x * scaleby, center.y * scaleby, radius * scaleby);
 }
 
+/*
+ * Measure the performance of circle finding given a reference image
+ * Ref image should be 100% green for the correct area. Ref image should
+ * be 100% red for the fringes that are still within the outer limits of the Petri dish
+ */
 bool testCirclePerformance(Vec3f circ, Mat refImg) 
 {
 	// Get red region

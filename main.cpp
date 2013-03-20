@@ -10,14 +10,21 @@
 
 using namespace cv;
 
+/*
+ * Main routine and associated support routines for running
+ * commandline version of plate counter.
+ */
+
 static Mat image;
 
-static double t = 0;
-
+// Default quantizations to use
 static int quants[] = { 256, 256 };
 
+// Maximum number of sample images (numbered 001, 002, etc.)
+// to use for training. Only those actually present will be used
 static const int NUM_SAMPLES = 12;
 
+static double t = 0;
 
 void timeit(const char *name) {
 	if (name!=NULL) {
@@ -26,6 +33,9 @@ void timeit(const char *name) {
 	t = (double)getTickCount();
 }
 
+/*
+ * Tests that circles are correctly found
+ */
 void runTestCircles()
 {
 	bool debug = false;
@@ -47,6 +57,9 @@ void runTestCircles()
 	}
 }
 
+/*
+ * Runs a counting test on an image
+ */
 void runTest(ColonyCounter& colonyCounter, string path, int redExpected, int blueExpected, double &error) 
 {
 	// Load image
@@ -108,6 +121,10 @@ void runTest(ColonyCounter& colonyCounter, string path, int redExpected, int blu
 //	}
 }
 
+/*
+ * Runs all counting tests, reading tests.yml from the samples folder
+ * to determine which images to count and what the expected values are
+ */
 void runTests() 
 {
 	ColonyCounter colonyCounter;
@@ -137,6 +154,10 @@ void runTests()
 	printf("Error %f\n", absErrorSum);
 }
 
+/*
+ * Like runTests, but using the quantized lookup table
+ * instead of the support vector machine directly.
+ */
 void runTestsSVMTable()
 {
 	ColonyCounter colonyCounter;
@@ -166,6 +187,9 @@ void runTestsSVMTable()
 	printf("Error %f\n", absErrorSum);
 }
 
+/*
+ * Run tests to make sure that quantization is working.
+ */
 void runQuantTests()
 {
 	ColonyCounter colonyCounter;
@@ -199,10 +223,6 @@ void runQuantTests()
 		imshow("normal", debugImg);
 		imshow("quant", debugImgq);
 		waitKey(0);
-
-		//colonyCounter.testQuantization(petri, quants);
-
-		//colonyCounter.testQuantization(img, quants);
 	}
 	fs.release();
 }

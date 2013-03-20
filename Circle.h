@@ -16,6 +16,9 @@
 #include <opencv2/opencv.hpp>
 using namespace cv;
 
+/**
+ * Class for finding the center and radius of a circle given three points
+ */
 class Circle  
 {
 public:

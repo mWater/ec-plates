@@ -11,6 +11,17 @@
 using namespace cv;
 using namespace std;
 
+/**
+ * Analyzes an EC Compact Dry Plate.
+ *
+ * Algorithm steps are as follows:
+ *
+ * 1) Find the circle of the petri dish
+ * 2) Preprocess the image
+ * 3) Categorize pixels using a Support Vector Machine that has been trained
+ * 4) Filter out small or unusually shaped colonies
+ * 5) Return a final count
+ */
 void analyseECPlate(OpenCVActivityContext& context) {
 	context.log("Reading image");
 
@@ -25,7 +36,7 @@ void analyseECPlate(OpenCVActivityContext& context) {
 
 	context.log("Finding petri image");
 
-	// Find petri img
+	// Find petri disk rectangle
 	Rect petriRect = findPetriRect(img);
 
 	if (petriRect.height == 0) {
@@ -34,11 +45,13 @@ void analyseECPlate(OpenCVActivityContext& context) {
 		return;
 	}
 
+	// Update screen
 	Mat petri = img(petriRect);
 	context.updateScreen(petri);
 
 	context.log("Loading training");
 
+	// Create the colony counter
 	ColonyCounter colonyCounter;
 	colonyCounter.loadTrainingQuantized(svmLookup, svmQuants);
 
@@ -48,6 +61,7 @@ void analyseECPlate(OpenCVActivityContext& context) {
 	petri = colonyCounter.preprocessImage(petri);
 	context.updateScreen(petri);
 
+	// Optionally write out preprocessed image
 	if (context.getParamCount() >= 3) {
 		imwrite(context.getParam(2), petri);
 	}
@@ -66,13 +80,14 @@ void analyseECPlate(OpenCVActivityContext& context) {
 	colonyCounter.countColonies(classified, red, blue, true, &debugImage);
 	context.updateScreen(debugImage);
 
+	// Optionally write out colony image
 	if (context.getParamCount() >= 2) {
 		imwrite(context.getParam(1), debugImage);
 	}
 
 	context.log("Showing results");
 
-	// Pause
+	// Pause to give the user time to see the results
 	sleep(2);
 
 	context.log("Done");
